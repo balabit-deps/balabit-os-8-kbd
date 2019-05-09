@@ -1,0 +1,34 @@
+From: Balint Reczey <balint.reczey@canonical.com>
+Date: Thu, 9 May 2019 17:19:42 +0200
+Subject: kbd_mode: Exit with success even when mode change is not performed
+
+Latest kbd_mode needs -f to perform dangerous mode switches but
+back-porting the full fix with the command failing withoug -f may
+break many scripts. As a compromise an error is printed when the mode
+switch would be dangerous and the mode switch is not performed without -f.
+---
+ src/kbd_mode.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/kbd_mode.c b/src/kbd_mode.c
+index 027462e..1faa58d 100644
+--- a/src/kbd_mode.c
++++ b/src/kbd_mode.c
+@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
+ 	if (force == 0) {
+ 		/* only perform safe mode switches */
+ 		if (ioctl(fd, KDGKBMODE, &orig_mode)) {
+-			kbd_error(EXIT_FAILURE, errno, "ioctl KDGKBMODE");
++			kbd_error(EXIT_SUCCESS, errno, "ioctl KDGKBMODE");
+ 		}
+ 
+ 		if (mode == orig_mode) {
+@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
+ 			fprint_mode(stderr, orig_mode);
+ 			fprintf(stderr, _("Changing to the requested mode may make "
+ 				"your keyboard unusable, please use -f to force the change.\n"));
+-			return EXIT_FAILURE;
++			return EXIT_SUCCESS;
+ 		}
+ 	}
+ 	if (ioctl(fd, KDSKBMODE, mode)) {
